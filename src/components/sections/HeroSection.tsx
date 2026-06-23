@@ -51,7 +51,12 @@ export default function HeroSection() {
 
       const natW = iceImg!.naturalWidth  || 1920
       const natH = iceImg!.naturalHeight || 1080
-      const imgH = vw / (natW / natH)
+      // On mobile the image is scaled to fill 100dvh (minHeight), so use
+      // the actual rendered height for waterline maths.
+      const naturalAspect = natW / natH
+      const naturalImgH   = vw / naturalAspect   // natural height at this width
+      // On mobile the image is taller than its natural height (fills viewport)
+      const imgH = isMobile ? Math.max(naturalImgH, vh) : naturalImgH
 
       // Waterline sits at 47% of the composite image height
       const waterlineY = imgH * 0.47
@@ -60,14 +65,10 @@ export default function HeroSection() {
       let endY: number
 
       if (isMobile) {
-        // On mobile the image is short (~220px at 390px wide).
-        // Position it so the top of the image is near the top of the viewport
-        // (just below the nav bar), letting the mountain fill the screen.
-        // startY = small positive offset so image top ≈ 0px from viewport top
+        // Image fills 100dvh via CSS min-height, so no translateY needed initially
         startY = 0
-
-        // Phase 2 end: shift image up so waterline is at ~55% of viewport
-        endY = vh * 0.55 - waterlineY
+        // Phase 2: shift up so the underwater section comes into view
+        endY = vh * 0.45 - waterlineY
       } else {
         // Desktop: waterline starts at the very bottom, reveals on scroll
         startY = vh - waterlineY
@@ -190,7 +191,20 @@ export default function HeroSection() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img ref={iceImgRef} src="/images/iceberg-hero-bg.jpg" alt=""
-            className="block w-full h-auto select-none" draggable={false} />
+            className="block select-none"
+            draggable={false}
+            style={{
+              /* Desktop: full width, natural aspect ratio */
+              width:  '100%',
+              height: 'auto',
+              /* Mobile override via media query equivalent inline:
+                 We use a CSS min-height trick so the image always fills
+                 at least 100dvh on small screens, cropping to cover. */
+              minHeight: '100dvh',
+              objectFit: 'cover',
+              objectPosition: 'center 20%',
+            }}
+          />
 
           {/* Left chunk — hidden on mobile via opacity in init() */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
