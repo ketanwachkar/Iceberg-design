@@ -1,7 +1,18 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
+import path from 'path'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  /* Silence the "multiple lockfiles" workspace-root warning */
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
 
-export default nextConfig;
+  /* Allow Next.js <Image> to serve local /public assets */
+  images: {
+    localPatterns: [{ pathname: '/images/**' }],
+  },
+
+  reactStrictMode: true,
+}
+
+export default nextConfig

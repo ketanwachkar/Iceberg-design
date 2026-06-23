@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* ─── CSS custom properties ──────────────────────────────────── */
+:root {
+  --sky:        #a5d6e1;
+  --sky-rgb:    165, 214, 225;
+  --deep:       #021428;
+  --deep-mid:   #052840;
+  --deep-light: #0d4a72;
+  --text-dark:  #0a324c;
+  --text-mid:   #3a6e88;
+  --teal:       #00a699;
+
+  /* next/font injects these CSS vars from layout.tsx */
+  --font-sans:  var(--font-inter),  'Inter',  sans-serif;
+  --font-disp:  var(--font-outfit), 'Outfit', sans-serif;
+}
+
+/* ─── Base reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html  { scroll-behavior: auto; }
+body  {
+  font-family: var(--font-sans);
+  background:  var(--sky);
+  color:        var(--text-dark);
+  overflow-x:   hidden;
+}
+
+/* Tailwind utility aliases for font families */
+.font-sans    { font-family: var(--font-sans);  }
+.font-display { font-family: var(--font-disp);  }
