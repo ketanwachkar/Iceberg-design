@@ -1,12 +1,5 @@
 'use client'
 
-/**
- * HudLabels
- * The "20% / 80%" fixed overlay labels.
- * Rendered invisible initially — GSAP fades them in during Phase 2.
- * Passed forwardRefs so the Hero animation hook can target them.
- */
-
 import { forwardRef } from 'react'
 
 export const HudAbove = forwardRef<HTMLDivElement>((_, ref) => (
@@ -15,18 +8,26 @@ export const HudAbove = forwardRef<HTMLDivElement>((_, ref) => (
     id="hud-above"
     aria-hidden="true"
     className="fixed z-[150] flex flex-col pointer-events-none opacity-0
-               top-[clamp(5rem,9vw,7rem)] right-[clamp(1.5rem,4vw,4rem)]
-               items-end text-right text-[var(--text-dark)]"
+               items-end text-right"
+    style={{
+      top:   'clamp(4.5rem, 9vw, 7rem)',
+      right: 'clamp(1rem, 4vw, 4rem)',
+      color: 'var(--text-dark)',
+    }}
   >
     <span
-      className="font-[family-name:var(--font-disp)] font-extrabold leading-none
-                 text-[clamp(2rem,4.5vw,3.5rem)] tracking-[-0.02em]"
+      className="font-[family-name:var(--font-disp)] font-extrabold leading-none"
+      style={{ fontSize: 'clamp(1.6rem, 5vw, 3.5rem)', letterSpacing: '-0.02em' }}
     >
       20%
     </span>
     <span
-      className="text-[clamp(0.5rem,0.85vw,0.68rem)] font-bold
-                 tracking-[0.2em] opacity-75 mt-1"
+      className="font-bold opacity-75"
+      style={{
+        fontSize: 'clamp(0.6rem, 1.5vw, 0.68rem)',
+        letterSpacing: '0.18em',
+        marginTop: '0.2rem',
+      }}
     >
       VISIBLE ABOVE WATER
     </span>
@@ -40,18 +41,25 @@ export const HudBelow = forwardRef<HTMLDivElement>((_, ref) => (
     id="hud-below"
     aria-hidden="true"
     className="fixed z-[150] flex flex-col pointer-events-none opacity-0
-               bottom-[clamp(2rem,4vw,4rem)] left-[clamp(1.5rem,4vw,4rem)]
                items-start text-white"
+    style={{
+      bottom: 'clamp(1.5rem, 4vw, 4rem)',
+      left:   'clamp(1rem, 4vw, 4rem)',
+    }}
   >
     <span
-      className="font-[family-name:var(--font-disp)] font-extrabold leading-none
-                 text-[clamp(2rem,4.5vw,3.5rem)] tracking-[-0.02em]"
+      className="font-[family-name:var(--font-disp)] font-extrabold leading-none"
+      style={{ fontSize: 'clamp(1.6rem, 5vw, 3.5rem)', letterSpacing: '-0.02em' }}
     >
       80%
     </span>
     <span
-      className="text-[clamp(0.5rem,0.85vw,0.68rem)] font-bold
-                 tracking-[0.2em] opacity-75 mt-1"
+      className="font-bold opacity-75"
+      style={{
+        fontSize: 'clamp(0.6rem, 1.5vw, 0.68rem)',
+        letterSpacing: '0.18em',
+        marginTop: '0.2rem',
+      }}
     >
       OPERATING BENEATH
     </span>

@@ -1,35 +1,13 @@
 'use client'
 
-/**
- * HeroSection
- * Pinned scroll-driven hero with iceberg composite image.
- *
- * LAYER STACK (z-index):
- *   1  sky bg
- *   2  hero particle canvas   (opacity 0 → 1 in Phase 2)
- *   3  layer-iceberg          composite img + two chunk imgs
- *   4  layer-sky-fade         colour gradient masks image sky
- *   5  layer-ocean-tint       dark underwater gradient
- *   6  layer-bottom-blend     seam to DeepSection
- *   10 banner                 headline + scroll cue
- *
- * PHASES (single scrub timeline, end: +=260%):
- *   0→1   Ocean reveal — image slides up, text floats down,
- *          tints appear, HUD labels fade in.
- *   1.1→2.1 Ice chunks split apart.
- */
-
 import { useRef } from 'react'
-import { useGSAP }    from '@/hooks/useGSAP'
+import { useGSAP }      from '@/hooks/useGSAP'
 import { useParticles } from '@/hooks/useParticles'
 import { HudAbove, HudBelow } from '@/components/ui/HudLabels'
 import { ScrollTrigger } from '@/lib/gsap'
 
 export default function HeroSection() {
-  /* ── Section ref (also the particle container) ─────────────── */
-  const heroRef = useRef<HTMLElement>(null)
-
-  /* ── Layer refs ─────────────────────────────────────────────── */
+  const heroRef         = useRef<HTMLElement>(null)
   const layerIcebergRef = useRef<HTMLDivElement>(null)
   const iceImgRef       = useRef<HTMLImageElement>(null)
   const chunkLRef       = useRef<HTMLImageElement>(null)
@@ -38,25 +16,15 @@ export default function HeroSection() {
   const oceanTintRef    = useRef<HTMLDivElement>(null)
   const bottomBlendRef  = useRef<HTMLDivElement>(null)
   const heroCanvasRef   = useRef<HTMLCanvasElement>(null)
+  const bannerRef       = useRef<HTMLDivElement>(null)
+  const titleRef        = useRef<HTMLHeadingElement>(null)
+  const taglineRef      = useRef<HTMLParagraphElement>(null)
+  const cueRef          = useRef<HTMLDivElement>(null)
+  const hudAboveRef     = useRef<HTMLDivElement>(null)
+  const hudBelowRef     = useRef<HTMLDivElement>(null)
 
-  /* ── Text refs ──────────────────────────────────────────────── */
-  const bannerRef  = useRef<HTMLDivElement>(null)
-  const titleRef   = useRef<HTMLHeadingElement>(null)
-  const taglineRef = useRef<HTMLParagraphElement>(null)
-  const cueRef     = useRef<HTMLDivElement>(null)
+  useParticles(heroCanvasRef, heroRef as React.RefObject<HTMLElement | null>, 60)
 
-  /* ── HUD refs ───────────────────────────────────────────────── */
-  const hudAboveRef = useRef<HTMLDivElement>(null)
-  const hudBelowRef = useRef<HTMLDivElement>(null)
-
-  /* ── Underwater particle canvas (starts hidden, GSAP reveals) ─ */
-  useParticles(
-    heroCanvasRef,
-    heroRef as React.RefObject<HTMLElement | null>,
-    60
-  )
-
-  /* ── GSAP scroll animation ──────────────────────────────────── */
   useGSAP((gsap) => {
     const hero        = heroRef.current
     const layerImg    = layerIcebergRef.current
@@ -79,6 +47,7 @@ export default function HeroSection() {
     function init() {
       const vw = window.innerWidth
       const vh = window.innerHeight
+      const isMobile = vw < 768
 
       const natW = iceImg!.naturalWidth  || 1920
       const natH = iceImg!.naturalHeight || 1080
@@ -86,13 +55,22 @@ export default function HeroSection() {
 
       // Waterline is at 47% of the composite image height
       const waterlineY = imgH * 0.47
-      const startY     = vh - waterlineY          // Phase 1: waterline at viewport bottom
-      const endY       = vh * 0.43 - waterlineY   // Phase 2 end: waterline at 43% down
+      const startY     = vh - waterlineY
+      // On mobile keep waterline a bit higher so the mountain is visible
+      const waterlineFinal = isMobile ? vh * 0.55 : vh * 0.43
+      const endY       = waterlineFinal - waterlineY
 
-      const clW = chunkL!.offsetWidth || 200
-      const crW = chunkR!.offsetWidth || 160
+      const clW = chunkL!.offsetWidth || 150
+      const crW = chunkR!.offsetWidth || 120
 
-      /* ── Initial states ──────────────────────────────────── */
+      // Banner base position — percentage of viewport height
+      // On mobile push it higher so it sits above the iceberg peak
+      const bannerBaseY = isMobile ? vh * 0.08 : vh * 0.13
+
+      // Phase 2 banner destination — into the underwater zone
+      const bannerEndY  = isMobile ? vh * 0.42 : vh * 0.54
+
+      /* Initial states */
       gsap.set(layerImg,    { y: startY })
       gsap.set(skyFade,     { opacity: 1 })
       gsap.set(oceanTint,   { opacity: 0 })
@@ -101,19 +79,19 @@ export default function HeroSection() {
       gsap.set(titleEl,     { color: '#0a324c' })
       gsap.set([hudAbove, hudBelow], { opacity: 0, y: 10 })
       gsap.set(cueEl,   { opacity: 0.65 })
-      gsap.set(banner,  { y: vh * 0.13 })
+      gsap.set(banner,  { y: bannerBaseY })
 
-      // Chunks start centred over the iceberg peak, hugging each side
+      // On mobile reduce the initial chunk offset so they stay centred
+      const chunkXOffset = isMobile ? 0.3 : 0.55
       gsap.set(chunkL, {
-        xPercent: -50, x: -(clW * 0.55),
-        y: 0, rotation: -2, scale: 1, opacity: 0.8,
+        xPercent: -50, x: -(clW * chunkXOffset),
+        y: 0, rotation: -2, scale: 1, opacity: isMobile ? 0 : 0.8,
       })
       gsap.set(chunkR, {
-        xPercent: -50, x: crW * 0.55,
-        y: 0, rotation:  2, scale: 1, opacity: 0.8,
+        xPercent: -50, x: crW * chunkXOffset,
+        y: 0, rotation:  2, scale: 1, opacity: isMobile ? 0 : 0.8,
       })
 
-      /* ── Master timeline ──────────────────────────────────── */
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: hero,
@@ -126,30 +104,32 @@ export default function HeroSection() {
         },
       })
 
-      /* Phase 2 — Ocean reveal (0 → 1.0) */
-      tl.to(layerImg,    { y: endY,    ease: 'power1.inOut', duration: 1    }, 0)
-      tl.to(skyFade,     { opacity: 0, ease: 'power2.in',    duration: 0.7  }, 0)
-      tl.to(oceanTint,   { opacity: 1, ease: 'power1.inOut', duration: 1    }, 0)
-      tl.to(bottomBlend, { opacity: 1, ease: 'power1.inOut', duration: 1    }, 0)
-      tl.to(heroCanvas,  { opacity: 1, ease: 'power1.in',    duration: 0.8  }, 0.2)
-      tl.to(banner,      { y: vh * 0.54, ease: 'power1.inOut', duration: 1  }, 0)
+      // Phase 2 — Ocean reveal
+      tl.to(layerImg,    { y: endY,         ease: 'power1.inOut', duration: 1    }, 0)
+      tl.to(skyFade,     { opacity: 0,       ease: 'power2.in',    duration: 0.7  }, 0)
+      tl.to(oceanTint,   { opacity: 1,       ease: 'power1.inOut', duration: 1    }, 0)
+      tl.to(bottomBlend, { opacity: 1,       ease: 'power1.inOut', duration: 1    }, 0)
+      tl.to(heroCanvas,  { opacity: 1,       ease: 'power1.in',    duration: 0.8  }, 0.2)
+      tl.to(banner,      { y: bannerEndY,    ease: 'power1.inOut', duration: 1    }, 0)
       tl.to(titleEl,     { color: '#ffffff', ease: 'power1.inOut', duration: 0.75 }, 0.1)
-      tl.to(taglineEl,   { color: 'rgba(200,232,242,0.85)', duration: 0.5   }, 0.1)
+      tl.to(taglineEl,   { color: 'rgba(200,232,242,0.85)', duration: 0.5         }, 0.1)
       tl.to(cueEl,       { opacity: 0, y: 6, duration: 0.2  }, 0)
       tl.to(hudAbove,    { opacity: 1, y: 0, ease: 'power2.out', duration: 0.35 }, 0.5)
       tl.to(hudBelow,    { opacity: 1, y: 0, ease: 'power2.out', duration: 0.35 }, 0.6)
 
-      /* Phase 3 — Chunks split apart (1.1 → 2.1) */
-      tl.to(chunkL, {
-        x: -(vw * 0.38), y: vh * 0.08,
-        rotation: -8, scale: 0.9, opacity: 1,
-        ease: 'power2.inOut', duration: 1,
-      }, 1.1)
-      tl.to(chunkR, {
-        x: vw * 0.36, y: vh * 0.06,
-        rotation: 7, scale: 0.85, opacity: 1,
-        ease: 'power2.inOut', duration: 1,
-      }, 1.1)
+      // Phase 3 — Chunks split (hidden on mobile — not enough horizontal space)
+      if (!isMobile) {
+        tl.to(chunkL, {
+          x: -(vw * 0.38), y: vh * 0.08,
+          rotation: -8, scale: 0.9, opacity: 1,
+          ease: 'power2.inOut', duration: 1,
+        }, 1.1)
+        tl.to(chunkR, {
+          x: vw * 0.36, y: vh * 0.06,
+          rotation: 7, scale: 0.85, opacity: 1,
+          ease: 'power2.inOut', duration: 1,
+        }, 1.1)
+      }
       tl.to(layerImg, {
         y: endY - vh * 0.04,
         ease: 'power1.inOut', duration: 1,
@@ -180,118 +160,92 @@ export default function HeroSection() {
         id="hero"
         aria-label="Introduction"
         className="relative w-full overflow-hidden"
-        style={{ height: '100vh', background: 'var(--sky)' }}
+        style={{ height: '100dvh', background: 'var(--sky)' }}
       >
-        {/* sky fill behind the image */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 z-[1]"
-          style={{ background: 'var(--sky)' }}
-        />
+        {/* sky fill */}
+        <div aria-hidden="true" className="absolute inset-0 z-[1]"
+          style={{ background: 'var(--sky)' }} />
 
-        {/* underwater particle canvas — fades in on scroll */}
-        <canvas
-          ref={heroCanvasRef}
-          aria-hidden="true"
+        {/* particle canvas */}
+        <canvas ref={heroCanvasRef} aria-hidden="true"
           className="absolute inset-0 w-full h-full pointer-events-none z-[2]"
-          style={{ opacity: 0 }}
-        />
+          style={{ opacity: 0 }} />
 
-        {/* composite iceberg image + ice chunks */}
-        <div
-          ref={layerIcebergRef}
-          aria-hidden="true"
+        {/* composite iceberg image + chunks */}
+        <div ref={layerIcebergRef} aria-hidden="true"
           className="absolute top-0 left-0 w-full z-[3]"
           style={{ willChange: 'transform' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            ref={iceImgRef}
-            src="/images/iceberg-hero-bg.jpg"
-            alt=""
-            className="block w-full h-auto select-none"
-            draggable={false}
-          />
+          <img ref={iceImgRef} src="/images/iceberg-hero-bg.jpg" alt=""
+            className="block w-full h-auto select-none" draggable={false} />
 
-          {/* Left chunk */}
+          {/* Left chunk — hidden on mobile via opacity in init() */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            ref={chunkLRef}
-            src="/images/ice-chunk-large.png"
-            alt=""
+          <img ref={chunkLRef} src="/images/ice-chunk-large.png" alt=""
             className="absolute object-contain select-none"
             draggable={false}
             style={{
-              width:   'clamp(150px,20vw,270px)',
-              top:     '40%',
-              left:    '50%',
-              filter:  'drop-shadow(0 10px 24px rgba(0,0,0,0.22))',
+              width: 'clamp(100px,14vw,270px)',
+              top: '40%', left: '50%',
+              filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.22))',
               willChange: 'transform',
             }}
           />
 
           {/* Right chunk */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            ref={chunkRRef}
-            src="/images/ice-chunk-small.png"
-            alt=""
+          <img ref={chunkRRef} src="/images/ice-chunk-small.png" alt=""
             className="absolute object-contain select-none"
             draggable={false}
             style={{
-              width:   'clamp(120px,16vw,210px)',
-              top:     '38%',
-              left:    '50%',
-              filter:  'drop-shadow(0 10px 24px rgba(0,0,0,0.22))',
+              width: 'clamp(80px,11vw,210px)',
+              top: '38%', left: '50%',
+              filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.22))',
               willChange: 'transform',
             }}
           />
         </div>
 
-        {/* sky-colour gradient — masks the image's own sky/clouds */}
-        <div
-          ref={skyFadeRef}
-          aria-hidden="true"
+        {/* sky-colour gradient — blends the image's sky into the page background.
+            On mobile the image is taller relative to viewport so we extend
+            the fade further down to mask more of the image's own sky/clouds */}
+        <div ref={skyFadeRef} aria-hidden="true"
           className="absolute inset-0 pointer-events-none z-[4]"
           style={{
             background: `linear-gradient(
               to bottom,
               rgba(var(--sky-rgb),1)    0%,
-              rgba(var(--sky-rgb),1)    28%,
-              rgba(var(--sky-rgb),0.88) 38%,
-              rgba(var(--sky-rgb),0.5)  48%,
-              rgba(var(--sky-rgb),0.12) 57%,
-              rgba(var(--sky-rgb),0)    65%
+              rgba(var(--sky-rgb),1)    32%,
+              rgba(var(--sky-rgb),0.92) 42%,
+              rgba(var(--sky-rgb),0.6)  52%,
+              rgba(var(--sky-rgb),0.18) 60%,
+              rgba(var(--sky-rgb),0)    70%
             )`,
           }}
         />
 
-        {/* dark underwater tint — reveals as iceberg descends */}
-        <div
-          ref={oceanTintRef}
-          aria-hidden="true"
+        {/* ocean tint */}
+        <div ref={oceanTintRef} aria-hidden="true"
           className="absolute inset-0 pointer-events-none z-[5]"
           style={{
             opacity: 0,
             background: `linear-gradient(
               to bottom,
-              transparent           0%,
-              transparent           36%,
-              rgba(2,20,40,0.28)    48%,
-              rgba(2,16,35,0.70)    64%,
-              rgba(2,10,28,0.92)    100%
+              transparent        0%,
+              transparent        36%,
+              rgba(2,20,40,0.28) 48%,
+              rgba(2,16,35,0.70) 64%,
+              rgba(2,10,28,0.92) 100%
             )`,
           }}
         />
 
-        {/* gradient seam into the next section */}
-        <div
-          ref={bottomBlendRef}
-          aria-hidden="true"
+        {/* bottom blend */}
+        <div ref={bottomBlendRef} aria-hidden="true"
           className="absolute bottom-0 left-0 w-full pointer-events-none z-[6]"
           style={{
-            height:  '35%',
-            opacity: 0,
+            height: '35%', opacity: 0,
             background: `linear-gradient(
               to bottom,
               transparent        0%,
@@ -302,25 +256,22 @@ export default function HeroSection() {
           }}
         />
 
-        {/* L7 — Text banner */}
+        {/* Text banner — top is set by GSAP y transform, left-half via translate */}
         <div
           ref={bannerRef}
-          className="absolute left-1/2 -translate-x-1/2 text-center
+          className="absolute left-1/2 -translate-x-1/2
+                     w-[92%] max-w-[860px] text-center
                      flex flex-col items-center pointer-events-none z-[10]"
-          style={{
-            width:       '90%',
-            maxWidth:    '860px',
-            willChange:  'transform',
-          }}
+          style={{ willChange: 'transform' }}
         >
           <p
             ref={taglineRef}
             className="font-bold uppercase"
             style={{
-              fontSize:      'clamp(0.6rem,1.2vw,0.8rem)',
-              letterSpacing: '0.3em',
-              color:         'var(--text-mid)',
-              marginBottom:  '1.2rem',
+              fontSize: 'clamp(0.65rem, 2.5vw, 0.8rem)',
+              letterSpacing: '0.25em',
+              color: 'var(--text-mid)',
+              marginBottom: '0.9rem',
             }}
           >
             ARCTIC OCEAN &bull; 80% HIDDEN
@@ -330,11 +281,11 @@ export default function HeroSection() {
             ref={titleRef}
             className="font-[family-name:var(--font-disp)] font-extrabold"
             style={{
-              fontSize:      'clamp(2rem,6vw,5.2rem)',
+              fontSize:      'clamp(2.2rem, 8vw, 5.2rem)',
               lineHeight:    1.08,
-              letterSpacing: '-0.025em',
+              letterSpacing: '-0.02em',
               color:         'var(--text-dark)',
-              marginBottom:  '1.6rem',
+              marginBottom:  '1.2rem',
             }}
           >
             Transforming<br />
@@ -345,27 +296,22 @@ export default function HeroSection() {
           <div
             ref={cueRef}
             className="flex items-center"
-            style={{ gap: '1.2rem', opacity: 0.65 }}
+            style={{ gap: '1rem', opacity: 0.65 }}
             aria-hidden="true"
           >
-            <span
-              className="block h-px"
-              style={{ width: 'clamp(24px,5vw,56px)', background: 'var(--text-mid)' }}
-            />
-            <span
-              className="font-bold uppercase"
+            <span className="block h-px"
+              style={{ width: 'clamp(20px,4vw,56px)', background: 'var(--text-mid)' }} />
+            <span className="font-bold uppercase"
               style={{
-                fontSize:      'clamp(0.55rem,0.9vw,0.68rem)',
-                letterSpacing: '0.22em',
-                color:         'var(--text-mid)',
+                fontSize: 'clamp(0.6rem, 2vw, 0.68rem)',
+                letterSpacing: '0.18em',
+                color: 'var(--text-mid)',
               }}
             >
               SCROLL TO GO BENEATH
             </span>
-            <span
-              className="block h-px"
-              style={{ width: 'clamp(24px,5vw,56px)', background: 'var(--text-mid)' }}
-            />
+            <span className="block h-px"
+              style={{ width: 'clamp(20px,4vw,56px)', background: 'var(--text-mid)' }} />
           </div>
         </div>
       </section>
