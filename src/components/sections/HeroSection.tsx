@@ -53,22 +53,34 @@ export default function HeroSection() {
       const natH = iceImg!.naturalHeight || 1080
       const imgH = vw / (natW / natH)
 
-      // Waterline is at 47% of the composite image height
+      // Waterline sits at 47% of the composite image height
       const waterlineY = imgH * 0.47
-      const startY     = vh - waterlineY
-      // On mobile keep waterline a bit higher so the mountain is visible
-      const waterlineFinal = isMobile ? vh * 0.55 : vh * 0.43
-      const endY       = waterlineFinal - waterlineY
+
+      let startY: number
+      let endY: number
+
+      if (isMobile) {
+        // On mobile the image is short (~220px at 390px wide).
+        // Position it so the top of the image is near the top of the viewport
+        // (just below the nav bar), letting the mountain fill the screen.
+        // startY = small positive offset so image top ≈ 0px from viewport top
+        startY = 0
+
+        // Phase 2 end: shift image up so waterline is at ~55% of viewport
+        endY = vh * 0.55 - waterlineY
+      } else {
+        // Desktop: waterline starts at the very bottom, reveals on scroll
+        startY = vh - waterlineY
+        endY   = vh * 0.43 - waterlineY
+      }
 
       const clW = chunkL!.offsetWidth || 150
       const crW = chunkR!.offsetWidth || 120
 
-      // Banner base position — percentage of viewport height
-      // On mobile push it higher so it sits above the iceberg peak
-      const bannerBaseY = isMobile ? vh * 0.08 : vh * 0.13
-
-      // Phase 2 banner destination — into the underwater zone
-      const bannerEndY  = isMobile ? vh * 0.42 : vh * 0.54
+      // Banner base — sits in the top quarter of the viewport above the mountain
+      const bannerBaseY = isMobile ? vh * 0.06 : vh * 0.13
+      // Phase 2 destination — floats into the underwater zone
+      const bannerEndY  = isMobile ? vh * 0.40 : vh * 0.54
 
       /* Initial states */
       gsap.set(layerImg,    { y: startY })
@@ -208,19 +220,19 @@ export default function HeroSection() {
         </div>
 
         {/* sky-colour gradient — blends the image's sky into the page background.
-            On mobile the image is taller relative to viewport so we extend
-            the fade further down to mask more of the image's own sky/clouds */}
+            On mobile the image starts at top:0 so the fade needs to cover the
+            image's own sky/clouds (top ~35% of the composite) */}
         <div ref={skyFadeRef} aria-hidden="true"
           className="absolute inset-0 pointer-events-none z-[4]"
           style={{
             background: `linear-gradient(
               to bottom,
               rgba(var(--sky-rgb),1)    0%,
-              rgba(var(--sky-rgb),1)    32%,
-              rgba(var(--sky-rgb),0.92) 42%,
-              rgba(var(--sky-rgb),0.6)  52%,
-              rgba(var(--sky-rgb),0.18) 60%,
-              rgba(var(--sky-rgb),0)    70%
+              rgba(var(--sky-rgb),1)    35%,
+              rgba(var(--sky-rgb),0.85) 46%,
+              rgba(var(--sky-rgb),0.45) 56%,
+              rgba(var(--sky-rgb),0.1)  64%,
+              rgba(var(--sky-rgb),0)    72%
             )`,
           }}
         />
@@ -256,10 +268,10 @@ export default function HeroSection() {
           }}
         />
 
-        {/* Text banner — top is set by GSAP y transform, left-half via translate */}
+        {/* Text banner */}
         <div
           ref={bannerRef}
-          className="absolute left-1/2 -translate-x-1/2
+          className="absolute top-0 left-1/2 -translate-x-1/2
                      w-[92%] max-w-[860px] text-center
                      flex flex-col items-center pointer-events-none z-[10]"
           style={{ willChange: 'transform' }}
