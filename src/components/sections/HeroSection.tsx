@@ -229,11 +229,12 @@ export default function HeroSection() {
           />
         </div>
 
-        {/* sky-colour gradient — thin blend at the top edges only.
-            The image mountain is the main visual; we only mask the very
-            top strip where the image's own sky meets the page background. */}
+        {/* sky-colour gradient — desktop only.
+            On mobile the image fills full screen and needs no masking.
+            On desktop the flat sky-bg sits above the image so we blend them. */}
         <div ref={skyFadeRef} aria-hidden="true"
-          className="absolute inset-0 pointer-events-none z-[4]"
+          className="absolute inset-0 pointer-events-none z-[4]
+                     hidden md:block"
           style={{
             background: `linear-gradient(
               to bottom,
