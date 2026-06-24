@@ -51,12 +51,11 @@ export default function HeroSection() {
 
       const natW = iceImg!.naturalWidth  || 1920
       const natH = iceImg!.naturalHeight || 1080
-      // On mobile the image is scaled to fill 100dvh (minHeight), so use
-      // the actual rendered height for waterline maths.
+      // Use actual rendered height (respects minHeight: 100dvh on mobile)
       const naturalAspect = natW / natH
-      const naturalImgH   = vw / naturalAspect   // natural height at this width
-      // On mobile the image is taller than its natural height (fills viewport)
-      const imgH = isMobile ? Math.max(naturalImgH, vh) : naturalImgH
+      const naturalImgH   = vw / naturalAspect
+      // On mobile minHeight:100dvh makes the image taller than its natural height
+      const imgH = Math.max(naturalImgH, isMobile ? vh : 0)
 
       // Waterline sits at 47% of the composite image height
       const waterlineY = imgH * 0.47
@@ -65,10 +64,10 @@ export default function HeroSection() {
       let endY: number
 
       if (isMobile) {
-        // Image fills 100dvh via CSS min-height, so no translateY needed initially
+        // Image fills screen from top — mountain visible, no initial offset needed
         startY = 0
-        // Phase 2: shift up so the underwater section comes into view
-        endY = vh * 0.45 - waterlineY
+        // Scroll up to bring waterline to ~50% of screen height
+        endY = vh * 0.50 - waterlineY
       } else {
         // Desktop: waterline starts at the very bottom, reveals on scroll
         startY = vh - waterlineY
@@ -186,7 +185,7 @@ export default function HeroSection() {
 
         {/* composite iceberg image + chunks */}
         <div ref={layerIcebergRef} aria-hidden="true"
-          className="absolute top-0 left-0 w-full z-[3]"
+          className="absolute top-0 left-0 w-full z-[3] overflow-hidden"
           style={{ willChange: 'transform' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -194,15 +193,17 @@ export default function HeroSection() {
             className="block select-none"
             draggable={false}
             style={{
-              /* Desktop: full width, natural aspect ratio */
-              width:  '100%',
-              height: 'auto',
-              /* Mobile override via media query equivalent inline:
-                 We use a CSS min-height trick so the image always fills
-                 at least 100dvh on small screens, cropping to cover. */
-              minHeight: '100dvh',
-              objectFit: 'cover',
-              objectPosition: 'center 20%',
+              /*
+               * Desktop: full viewport width, natural height (~56vw for 16:9)
+               * Mobile:  scale by height so the image fills 100dvh.
+               *          width: auto lets the image be wider than viewport (overflow hidden clips it).
+               *          The mountain peak sits in the top half of the image so it stays visible.
+               */
+              display:    'block',
+              width:      '100%',
+              height:     'auto',
+              minHeight:  '100dvh',
+              maxWidth:   'none',
             }}
           />
 
@@ -233,20 +234,18 @@ export default function HeroSection() {
           />
         </div>
 
-        {/* sky-colour gradient — blends the image's sky into the page background.
-            On mobile the image starts at top:0 so the fade needs to cover the
-            image's own sky/clouds (top ~35% of the composite) */}
+        {/* sky-colour gradient — thin blend at the top edges only.
+            The image mountain is the main visual; we only mask the very
+            top strip where the image's own sky meets the page background. */}
         <div ref={skyFadeRef} aria-hidden="true"
           className="absolute inset-0 pointer-events-none z-[4]"
           style={{
             background: `linear-gradient(
               to bottom,
               rgba(var(--sky-rgb),1)    0%,
-              rgba(var(--sky-rgb),1)    35%,
-              rgba(var(--sky-rgb),0.85) 46%,
-              rgba(var(--sky-rgb),0.45) 56%,
-              rgba(var(--sky-rgb),0.1)  64%,
-              rgba(var(--sky-rgb),0)    72%
+              rgba(var(--sky-rgb),0.6)  12%,
+              rgba(var(--sky-rgb),0.2)  22%,
+              rgba(var(--sky-rgb),0)    32%
             )`,
           }}
         />
