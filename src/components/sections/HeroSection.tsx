@@ -238,9 +238,11 @@ export default function HeroSection() {
             background: `linear-gradient(
               to bottom,
               rgba(var(--sky-rgb),1)    0%,
-              rgba(var(--sky-rgb),0.6)  12%,
-              rgba(var(--sky-rgb),0.2)  22%,
-              rgba(var(--sky-rgb),0)    32%
+              rgba(var(--sky-rgb),1)    22%,
+              rgba(var(--sky-rgb),0.85) 34%,
+              rgba(var(--sky-rgb),0.5)  44%,
+              rgba(var(--sky-rgb),0.15) 53%,
+              rgba(var(--sky-rgb),0)    62%
             )`,
           }}
         />
