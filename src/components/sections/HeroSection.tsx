@@ -51,27 +51,21 @@ export default function HeroSection() {
 
       const natW = iceImg!.naturalWidth  || 1920
       const natH = iceImg!.naturalHeight || 1080
-      // Use actual rendered height (respects minHeight: 100dvh on mobile)
-      const naturalAspect = natW / natH
-      const naturalImgH   = vw / naturalAspect
-      // On mobile minHeight:100dvh makes the image taller than its natural height
-      const imgH = Math.max(naturalImgH, isMobile ? vh : 0)
-
-      // Waterline sits at 47% of the composite image height
-      const waterlineY = imgH * 0.47
+      // Image is 100vw × 100dvh with object-fit:cover, anchored top.
+      // Scale is width-driven: rendered height = natH × (vw / natW)
+      const scaleFactor  = vw / natW
+      const renderedImgH = natH * scaleFactor
+      const waterlineY   = renderedImgH * 0.47   // waterline px from top of rendered image
 
       let startY: number
-      let endY: number
+      let endY:   number
 
       if (isMobile) {
-        // Image fills screen from top — mountain visible, no initial offset needed
-        startY = 0
-        // Scroll up to bring waterline to ~50% of screen height
-        endY = vh * 0.50 - waterlineY
+        startY = 0                              // mountain fills screen from top
+        endY   = vh * 0.50 - waterlineY        // scroll up to reveal underwater zone
       } else {
-        // Desktop: waterline starts at the very bottom, reveals on scroll
-        startY = vh - waterlineY
-        endY   = vh * 0.43 - waterlineY
+        startY = vh - waterlineY               // waterline at viewport bottom initially
+        endY   = vh * 0.43 - waterlineY        // waterline rises to 43% on scroll
       }
 
       const clW = chunkL!.offsetWidth || 150
@@ -194,16 +188,17 @@ export default function HeroSection() {
             draggable={false}
             style={{
               /*
-               * Desktop: full viewport width, natural height (~56vw for 16:9)
-               * Mobile:  scale by height so the image fills 100dvh.
-               *          width: auto lets the image be wider than viewport (overflow hidden clips it).
-               *          The mountain peak sits in the top half of the image so it stays visible.
+               * Fill the full viewport on all screen sizes.
+               * object-fit: cover scales up to fill width AND height.
+               * object-position: center top anchors the crop to the top
+               * so the mountain peak is always visible, excess cropped from bottom.
                */
-              display:    'block',
-              width:      '100%',
-              height:     'auto',
-              minHeight:  '100dvh',
-              maxWidth:   'none',
+              display:         'block',
+              width:           '100vw',
+              height:          '100dvh',
+              objectFit:       'cover',
+              objectPosition:  'center top',
+              maxWidth:        'none',
             }}
           />
 
